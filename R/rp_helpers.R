@@ -33,7 +33,7 @@ is.rp.heading <- function(x)  (inherits(x, 'rp.heading'))
 
 #' Variables
 #'
-#' From our point of view, a \code{variable} is a non-\code{NULL} atomic vector that has no dimensions. This approach bypasses \code{factor} issues with \code{\link{is.vector}}, and also eliminates multidimensional vectors, such as matrices and arrays.
+#' From \emph{rapport}'s point of view, a \code{variable} is a non-\code{NULL} atomic vector that has no dimension attribute (see \code{dim} for details). This approach bypasses \code{factor} issues with \code{\link{is.vector}}, and also eliminates multidimensional vectors, such as matrices and arrays.
 #' @param x an object to be checked for "variable" format
 #' @return a logical value indicating that provided object is a "variable"
 #' @examples
@@ -200,7 +200,7 @@ rp.label <- function(x, fallback = TRUE){
 #' @param var a variable (see \code{\link{is.variable}} for details)
 #' @param value a character value that is to be set as variable label
 #' @usage rp.label(var) <- value
-#' @seealso \code{rp.label}
+#' @seealso \code{\link{rp.label}}
 #' @examples \dontrun{
 #' rp.label(mtcars$mpg) <- "fuel consumption"
 #' x <- rnorm(100); ( rp.label(x) <- "pseudo-random normal variable" )
@@ -883,6 +883,7 @@ rp.round <- function(x, short = FALSE, digits = NULL) {
 #'     \item 'rp.decimal.mark'.
 #' }
 #' @param x R object
+#' @param asciitype markdown language to use for returning tables (eg. pandox, t2t, asciidoc etc.)
 #' @return ascii
 #' @examples \dontrun{
 #' rp.prettyascii('Hello, World?')
@@ -901,7 +902,7 @@ rp.round <- function(x, short = FALSE, digits = NULL) {
 #' cat(rp.prettyascii(rp.freq("gender", data = ius2008)))
 #' }
 #' @export
-rp.prettyascii <- function(x) {
+rp.prettyascii <- function(x, asciitype = getOption('asciiType')) {
 
     if ((length(x) == 1) & (is.rapport(x) | is.character(x)))
         return(x)
@@ -922,6 +923,8 @@ rp.prettyascii <- function(x) {
     if (is.vector(x))
         return(p(x, limit = Inf))
 
+    asciitype.original <- getOption('asciiType')
+    options('asciiType' = asciitype)
     if (is.data.frame(x) | is.table(x)) {
         ## rounding till \code{ascii} bug fixed: https://github.com/eusebe/ascii/issues/12
         numerics <- which(sapply(x, is.numeric))
@@ -937,41 +940,44 @@ rp.prettyascii <- function(x) {
             ## not so neat hack to close all possible lists before exporting a table with missing first column header
             pre.txt <- ifelse(include.rownames, '<!-- endlist -->\n', '')
         }
-        return(paste(pre.txt, paste(capture.output(ascii(x, include.rownames = include.rownames)), collapse='\n'), sep=''))
+        res <- paste(pre.txt, paste(capture.output(ascii(x, include.rownames = include.rownames)), collapse='\n'), sep='')
+        options('asciiType' = asciitype.original)
+        return(res)
     }
 
     x.class <- class(x)
     if (x.class == 'trellis' | x.class == 'ggplot')
         stop('ggplot2 and trellis objects must be printed in strict mode!')
 
-    return(paste(capture.output(ascii(x, format='nice', digits=getOption('rp.decimal'), decimal.mark = getOption('rp.decimal.mark'))), collapse='\n'))
+    res <- paste(capture.output(ascii(x, format='nice', digits=getOption('rp.decimal'), decimal.mark = getOption('rp.decimal.mark'))), collapse='\n')
+    options('asciiType' = asciitype.original)
+    return(res)
 }
 
 
 #' Inline Printing
 #'
-#' Merge atomic vector elements in one string for pretty inline printing.
-#'
-#' Default parameters are read from \code{options}:
-#'
-#' \itemize{
-#'     \item 'p.wrap',
-#'     \item 'p.sep',
-#'     \item 'p.copula'.
-#' }
+#' \code{\link{p}} merges elements of a variable (see \code{\link{is.variable}}) in one string for the sake of pretty inline printing. Default parameters are read from appropriate \code{option} values (see argument description for details). This function allows you to put the results of an expression that yields a variable \emph{inline}, by wrapping the vector elements with the string provided in \code{wrap}, and separating elements by main and ending separator (\code{sep} and \code{copula}). In case of a two-length vector, value specified in \code{copula} will be used as a separator. You can also control the length of provided vector by altering an integer value specified in \code{limit} argument (defaults to \code{20}).
 #' @param x an atomic vector to get merged for inline printing
-#' @param wrap string to wrap vector elements (defaults to \code{_}, i.e. underline in pandoc)
-#' @param sep a string with main separator (separates all vector elements but the last one)
-#' @param copula a string with last separator (usually a copula like "and")
+#' @param wrap a string to wrap vector elements (uses value set in \code{p.wrap} option: \code{"_"} by default, which is a markdown-friendly wrapper and it puts the string in \emph{italic})
+#' @param sep a string with the main separator, i.e. the one that separates all vector elements but the last two (uses the value set in \code{p.sep} option - \code{","} by default)
+#' @param copula a string with ending separator - the one that separates the last two vector elements (uses the value set in \code{p.copula} option, \code{"and"} by default)
 #' @param limit maximum character length (defaults to 20 elements)
 #' @return a string with concatenated vector contents
 #' @examples
 #' p(c("fee", "fi", "foo", "fam"))
 #' ## [1] "_fee_, _fi_, _foo_ and _fam_"
+#' p(1:3, wrap = "")
+#' ## [1] "1, 2 and 3"
+#' p(LETTERS[1:5], copula = "and the letter")
+#' ## [1] "_A_, _B_, _C_, _D_ and the letter _E_"
+#' p(c("Thelma", "Louise"), wrap = "", copula = "&")
+#' ## [1] "Thelma & Louise"
 #' @export
 p <- function(x, wrap = getOption('p.wrap'), sep = getOption('p.sep'), copula = getOption('p.copula'), limit = 20L){
 
-    stopifnot(is.atomic(x))           # check for atomic vector
+    stopifnot(is.variable(x))         # check output (should be output)
+    stopifnot(all(sapply(list(wrap, sep, copula), is.string))) # separators should be strings
     x.len <- length(x)                # vector length
     stopifnot(x.len > 0)              # no zero-length vectors allowed
     stopifnot(x.len <= limit)         # check limits
@@ -979,9 +985,9 @@ p <- function(x, wrap = getOption('p.wrap'), sep = getOption('p.sep'), copula = 
     if (x.len == 1)
         wrap(x, wrap)
     else if (x.len == 2)
-        paste(wrap(x, wrap), collapse = wrap(copula, ' '))
+        paste(wrap(x, wrap), collapse = sprintf(' %s ', copula))
     else
-        paste(paste(wrap(x[1:(x.len - 1)], wrap), collapse = sep), copula, wrap(x[x.len], wrap))
+        paste(paste(wrap(head(x, -1), wrap), collapse = sep), copula, wrap(tail(x, 1), wrap))
 }
 
 

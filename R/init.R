@@ -1,8 +1,8 @@
 .onLoad <- function(libname, pkgname)
 {
     ## rapport settings
-    options('rapport.mode'     = 'normal')
-    options('asciiType'        = 'pandoc')
+    options('rapport.mode'          = 'normal')
+    options('asciiType'             = 'pandoc')
 
     ## encrypt/decrypt key generation settings
     options('.encrypt.chars'   = paste(c(LETTERS, letters, 0:9, ' ', '(', ')', '=', '~', '.', '+', '"', "'",'$', '#'), collapse = ""))
@@ -46,7 +46,9 @@
     ##  * theEconomist.theme() from latticeExtra package
     ##  * custom.theme.black() from latticist package
     ##  * set custom theme to an R object, details: ?trellis.par.get()
-    options('style.grid'          = 'both')           # to draw grids for 'x', 'y', 'both' axis or 'none'
+    options('style.grid'          = 'both')         # to draw grids for 'x', 'y', 'both' axis or 'none'
+    if (.Platform$OS.type == "windows")             # set Windows fonts if necessary  
+        windowsFonts(Helvetica = windowsFont("TT Helvetica")) 
     options('style.font'          = 'Helvetica')
     options('style.color.palette' = 'default')      # for other palette options, see: ?brewer.pal.info
     options('style.colorize'      = FALSE)
@@ -56,6 +58,10 @@
     options('graph.height'        = 480)
     options('graph.res'           = 72)
     options('graph.hi.res'        = FALSE)
+    ## image environment
+    options('graph.save.env'      = FALSE)
+    options('graph.record'        = FALSE)
+    options('graph.replay'        = FALSE) # TODO: fix on Win platform!
 
     ## tag regexes
     options('rp.tags' = c(

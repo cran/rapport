@@ -109,6 +109,8 @@ print.rapport <- function(x, ...) {
 
     if (!is.rapport(x)) stop('Wrong type of argument (!rapport) supplied!')
 
+    images <- NULL
+
     ## print report body
     for (part in x$report){
         robj  <- part$robjects[[1]]
@@ -119,9 +121,10 @@ print.rapport <- function(x, ...) {
         switch(part$type,
                'block' = {
                    if (!is.null(rout)){
-                       if (any(robj$type == 'image'))
+                       if (any(robj$type == 'image')) {
+                           images <- c(images, as.character(rout))
                            cat(as.character(rout))
-                       else
+                       } else
                            cat(rp.prettyascii(rout))
                    }
 
@@ -133,4 +136,54 @@ print.rapport <- function(x, ...) {
                )
         catn()
     }
+    
+    if (getOption('graph.replay')) {
+        cat('\n', rep('=', getOption('width')), sep='')
+        cat('\n  Attached images:\n\n    Note: you may optionally resize images on the fly which new dimensions will be saved to disk.\n          Do not close graphics device before this happens (pressing ENTER) if you want to update your image files!\n')
+        
+        for (image in images) {
+            
+            img.ext <- tail(strsplit(image, "\\.")[[1]], 1)
+            recorded.plot <- sub(sprintf('%s$', img.ext), 'recordplot', image)
+            
+            if (file.exists(recorded.plot)) {
+
+                cat(sprintf('\n    * %s', image))
+                redraw.recordedplot(recorded.plot)
+                `/dev/null` <- readline('\n    Press ENTER to continue! ')
+
+                if (length(dev.list()) > 0) {
+                    device <- img.ext # this should be done outside of this check...
+
+                    if (device == 'jpg')
+                        device <- 'jpeg'
+                    res <- ifelse(device %in% c('svg', 'pdf'), 1, getOption('graph.res'))
+                    size <- dev.size()
+                    
+                    dev.copy(get(device), width = size[1]*res, height = size[2]*res, image)
+                    dev.off(); dev.off()
+                }
+
+            } else
+                cat(sprintf('\n\t* %s: was not run with `graph.record` option set to `TRUE`', image))
+        }
+    }
+}
+
+
+#' Redraws saved plot
+#' 
+#' This function is a wrapper around \code{replayPlot} with some added tweaks (fixing memory address nullpointer issue) for compatibility.
+#' @param file path and name of file to read saved \code{recordPlot} object
+#' @references Thanks to Jeroen Ooms: \url{http://permalink.gmane.org/gmane.comp.lang.r.devel/29897}.
+#' @seealso \code{\link{evals}}
+#' @export
+redraw.recordedplot <- function(file) {
+    plot <- readRDS(file)
+    for(i in 1:length(plot[[1]])) { 
+        if( "NativeSymbolInfo" %in% class(plot[[1]][[i]][[2]][[1]]) ){ 
+            plot[[1]][[i]][[2]][[1]] <- getNativeSymbolInfo(plot[[1]][[i]][[2]][[1]]$name); 
+        } 
+    }
+    replayPlot(plot)
 }

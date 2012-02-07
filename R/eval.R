@@ -1,10 +1,10 @@
 #' Evaluate with messages
 #'
-#' This function takes text(s) of R code and \code{eval}s all at one run then returns a list with four elements:
+#' This function takes text(s) of R code and \code{\link{eval}}s all at one run then returns a list with four elements:
 #'
 #' \itemize{
 #'     \item \emph{src} - a character value with specified R code.
-#'     \item \emph{output} - generated output. \code{NULL} if nothing is returned. If any string returned an R object while evaluating then the \emph{last} R object will be returned as a raw R object. If a graph is plotted in the given text, the returned object is a string specifying the path to the saved png in temporary directory (see: \code{tmpfile()}). If multiple plots was run in the same run (see: nested lists as inputs above) then the last plot is saved. If graphic device was touched, then no other R objects will be returned.
+#'     \item \emph{output} - generated output. \code{NULL} if nothing is returned. If any string returned an R object while evaluating then the \emph{last} R object will be returned as a raw R object. If a graph is plotted in the given text, the returned object is a string specifying the path to the saved png in temporary directory (see: \code{\link{tempfile}}). If multiple plots was run in the same run (see: nested lists as inputs above) then the last plot is saved. If graphic device was touched, then no other R objects will be returned.
 #'     \item \emph{type} - class of generated output. "NULL" if nothing is returned, "image" if the graphic device was touched, "error" if some error occurred.
 #'     \item \emph{msg} - possible messages grabbed while evaluating specified R code with the following structure:
 #'     \itemize{
@@ -16,6 +16,7 @@
 #' @param src character values containing R code
 #' @param env environment where evaluation takes place. If not set (by default), a new temporary environment is created.
 #' @return  a list of parsed elements each containing: src (the command run), output (what the command returns, \code{NULL} if nothing returned, path to image file if a plot was generated), type (class of returned object if any) and messages: warnings (if any returned by the command run, otherwise set to \code{NULL}) and errors (if any returned by the command run, otherwise set to \code{NULL}). See Details above.
+#' @seealso \code{\link{evals}}
 #' @export
 #' @examples \dontrun{
 #' eval.msgs('1:5')
@@ -64,7 +65,7 @@ eval.msgs <- function(src, env = NULL) {
 #'
 #' This function takes either a list of integer indices which point to position of R code in \code{body} character vector, or a vector/list of strings with actual R code, then evaluates each list element, and returns a list with four elements: a character value with R code, generated output, class of generated output and possible error/warning messages. If a graph is plotted in the given text, the returned object is a string specifying the path to the saved png in temporary directory. Please see Details below.
 #'
-#' If input strings are given as vector or not nested list (or even only one string), the returned list's length equals to the length of the input - as each string is evaluated as separate R code in the same environment. If a nested list is provided like \code{list(c('runif(1)', 'runif(1)'))} then all strings found in a list element is \code{eval}ed at one run so the length of returned list equals to the length of parent list. See examples below.
+#' If input strings are given as vector or not nested list (or even only one string), the returned list's length equals to the length of the input - as each string is evaluated as separate R code in the same environment. If a nested list is provided like \code{list(c('runif(1)', 'runif(1)'))} then all strings found in a list element is \code{\link{eval}}ed at one run so the length of returned list equals to the length of parent list. See examples below.
 #'
 #' As \code{\link{evals}} tries to grab the plots internally, pleas do not run commands that set graphic device or \code{\link{dev.off}} if you want to use \code{\link{evals}} to save the images and return the path of generated png(s). E.g. running \code{evals(c('png("/tmp/x.png")', 'plot(1:10)', 'dev.off()'))} would fail.
 #'
@@ -73,9 +74,9 @@ eval.msgs <- function(src, env = NULL) {
 #' Returned result values: list with the following elements
 #' \itemize{
 #'     \item \emph{src} - a character value with specified R code.
-#'     \item \emph{output} - generated output. \code{NULL} if nothing is returned. If any string returned an R object while \code{eval}ing then the \emph{last} R object will be returned as a raw R object. If a graph is plotted in the given text, the returned object is a string specifying the path to the saved png in temporary directory (see: \code{tmpfile()}). If multiple plots was run in the same run (see: nested lists as inputs above) then the last plot is saved. If graphic device was touched, then no other R objects will be returned.
+#'     \item \emph{output} - generated output. \code{NULL} if nothing is returned. If any string returned an R object while \code{\link{eval}}ing then the \emph{last} R object will be returned as a raw R object. If a graph is plotted in the given text, the returned object is a string specifying the path to the saved png in temporary directory (see: \code{\link{tempfile}}). If multiple plots was run in the same run (see: nested lists as inputs above) then the last plot is saved. If graphic device was touched, then no other R objects will be returned.
 #'     \item \emph{type} - class of generated output. "NULL" if nothing is returned, "image" if the graphic device was touched, "error" if some error occurred.
-#'     \item \emph{msg} - possible messages grabbed while \code{eval}ing specified R code with the following structure:
+#'     \item \emph{msg} - possible messages grabbed while \code{\link{eval}}ing specified R code with the following structure:
 #'     \itemize{
 #'         \item \emph{messages} - string of possible diagnostic message(s)
 #'         \item \emph{warnings} - string of possible warning message(s)
@@ -83,12 +84,12 @@ eval.msgs <- function(src, env = NULL) {
 #'     }
 #' }
 #'
-#' With \code{check.output} options set to \code{FALSE}, \code{evals} will not check each line of passed R code for outputs to speed up runtime. This way the user is required to pass only reliable and well structured/formatted text to \code{evals}. A list to check before running code in \code{evals}:
+#' With \code{check.output} options set to \code{FALSE}, \code{\link{evals}} will not check each line of passed R code for outputs to speed up runtime. This way the user is required to pass only reliable and well structured/formatted text to \code{\link{evals}}. A list to check before running code in \code{\link{evals}}:
 #'
 #' \itemize{
 #'     \item the code should return on the last line of the passed code (if it returns before that, it would not be grabbed),
 #'     \item the code should always return something on the last line (if you do not want to return anything, add \code{NULL} as the last line),
-#'     \item \code{ggplot} and \code{lattice} graphs should be always printed (of course on the last line),
+#'     \item \code{ggplot2} and \code{\link{lattice}} graphs should be always printed (of course on the last line),
 #'     \item a code part resulting in a plot should not alter variables and data sets,
 #'     \item the code should be checked before live run with \code{check.output} option set to \code{TRUE} just to be sure if everything goes OK.
 #' }
@@ -112,10 +113,12 @@ eval.msgs <- function(src, env = NULL) {
 #' @param hi.res.width  width of generated high resolution plot in pixels for even vector formats (!)
 #' @param hi.res.height height of generated high resolution plot in pixels for even vector formats (!). This value can be left blank to be automatically calculated to match original plot aspect ratio.
 #' @param hi.res.res nominal resolution of high resolution plot in ppi. The height and width of vector plots will be calculated based in this. This value can be left blank to be automatically calculated to fit original plot scales.
-#' @param graph.env save the environments in which plots were generated to distinct files?
+#' @param graph.env save the environments in which plots were generated to distinct files with \code{env} extension?
+#' @param graph.recordplot save the plot via \code{\link{recordPlot}} to distinct files with {recodplot} extension?
 #' @param ... optional parameters passed to graphics device (e.g. \code{bg}, \code{pointsize} etc.)
 #' @return a list of parsed elements each containing: src (the command run), output (what the command returns, \code{NULL} if nothing returned, path to image file if a plot was generated), type (class of returned object if any) and messages: warnings (if any returned by the command run, otherwise set to \code{NULL}) and errors (if any returned by the command run, otherwise set to \code{NULL}). See Details above.
 #' @author Gergely Daróczi
+#' @seealso \code{\link{eval.msgs}}, \code{\link{redraw.recordedplot}}
 #' @examples \dontrun{
 #' # parsing line-by-line
 #' txt <- readLines(textConnection('x <- rnorm(100)
@@ -174,6 +177,12 @@ eval.msgs <- function(src, env = NULL) {
 #' evals(list(c('x <- runif(100)', 'plot(x)')), graph.env = TRUE)
 #' evals(c('plot(1:10)', 'plot(2:20)'), graph.env = TRUE)
 #' evals(list(c('x <- runif(100)', 'plot(x)'), c('y <- runif(100)', 'plot(y)')), graph.env = TRUE)
+#' evals('plot(1:10)', graph.recordplot = TRUE)
+#' evals('histogram(mtcars$hp)', graph.recordplot = TRUE)
+#' evals(list(c('x <- runif(100)', 'plot(x)')), graph.recordplot = TRUE)
+#' evals(c('plot(1:10)', 'plot(2:20)'), graph.recordplot = TRUE)
+#' evals('plot(10:100)', graph.output = 'pdf')
+#' evals('runif(10)', graph.output = 'pdf')
 #'
 #' ## hooks
 #' hooks <- list('numeric' = round, 'matrix' = ascii)
@@ -222,7 +231,7 @@ eval.msgs <- function(src, env = NULL) {
 #' evals('mean(x)')
 #' }
 #' @export
-evals <- function(txt = NULL, ind = NULL, body = NULL, classes = NULL, hooks = NULL, length = Inf, output = c('all', 'src', 'output', 'type', 'msg'), env = NULL, check.output = TRUE, graph.name = tempfile(), graph.output = c('png', 'bmp', 'jpeg', 'jpg', 'tiff', 'svg', 'pdf'), width = 480, height = 480, res= 72, hi.res = FALSE, hi.res.width = 960, hi.res.height = 960*(height/width), hi.res.res = res*(hi.res.width/width), graph.env = FALSE, ...){
+evals <- function(txt = NULL, ind = NULL, body = NULL, classes = NULL, hooks = NULL, length = Inf, output = c('all', 'src', 'output', 'type', 'msg'), env = NULL, check.output = TRUE, graph.name = tempfile(), graph.output = c('png', 'bmp', 'jpeg', 'jpg', 'tiff', 'svg', 'pdf'), width = 480, height = 480, res= 72, hi.res = FALSE, hi.res.width = 960, hi.res.height = 960*(height/width), hi.res.res = res*(hi.res.width/width), graph.env = FALSE, graph.recordplot = FALSE, ...){
 
     if (!xor(missing(txt), missing(ind)))
         stop('either a list of text or a list of indices should be provided')
@@ -262,6 +271,7 @@ evals <- function(txt = NULL, ind = NULL, body = NULL, classes = NULL, hooks = N
 
     `%INDEX` <- 0
     lapply(txt, function(src) {
+
         `%INDEX` <<- `%INDEX` + 1
 
         clear.devs <- function()
@@ -273,12 +283,20 @@ evals <- function(txt = NULL, ind = NULL, body = NULL, classes = NULL, hooks = N
         file <- sprintf('%s.%s', file.name, graph.output)
         if (graph.output %in% c('bmp', 'jpeg', 'png', 'tiff'))
             do.call(graph.output, list(file, width = width, height = height, res = res, ...))
-        else
+        if (graph.output == 'svg')
             do.call(graph.output, list(file, width = width/res, height = height/res, ...)) # TODO: font-family?
+        if (graph.output == 'pdf')
+            do.call('cairo_pdf', list(file, width = width/res, height = height/res, ...)) # TODO: font-family?
+        dev.control(displaylist = "enable")
 
         if (check.output) {
             ## running evaluate for checking outputs and grabbing warnings/errors
             eval <- suppressWarnings(try(evaluate(src, envir = env.evaluate), silent=TRUE))
+
+            if (!is.null(dev.list())) {
+                recorded.plot <- recordPlot()
+                dev.control("inhibit")
+            }
 
             ## error handling
             error <- grep('error', lapply(eval, function(x) class(x)))
@@ -325,7 +343,7 @@ evals <- function(txt = NULL, ind = NULL, body = NULL, classes = NULL, hooks = N
 
             ## graph was produced?
             clear.devs()
-            graph <- ifelse(is.na(file.info(file)$size), FALSE, file)
+            graph <- ifelse(exists('recorded.plot'), ifelse(is.null(recorded.plot[[1]]), FALSE, file), FALSE)
             ## any returned value?
             if (length(eval.sources.outputs) > 0) {
                 if (is.logical(graph)) {
@@ -351,33 +369,46 @@ evals <- function(txt = NULL, ind = NULL, body = NULL, classes = NULL, hooks = N
             }
         } else {
             res <- eval.msgs(src, env = env)
+            if (!is.null(dev.list())) {
+                recorded.plot <- recordPlot()
+                dev.control("inhibit")
+            }
+            clear.devs()
             if (!is.null(res$msg$errors))
                 return(res)
             returns <- res$output
             warnings <- res$msg$warnings
-            graph <- ifelse(is.na(file.info(file)$size), FALSE, file)
+            graph <- ifelse(exists('recorded.plot'), ifelse(is.null(recorded.plot[[1]]), FALSE, file), FALSE)
         }
 
-        clear.devs()
+        ## save recorded plot on demand
+        if (is.character(graph) & graph.recordplot) {
+            saveRDS(recorded.plot, file = sprintf('%s.recordplot', file.name))
+        }
+            
         if (is.character(graph)) {
             returns <- graph
             class(returns) <- "image"
+
             ## saving environment on demand
             if (graph.env)
-                save(list = ls(envir = env), file = sprintf('%s.RData', file.name), envir = env)
+                save(list = ls(envir = env), file = sprintf('%s.env', file.name), envir = env)
 
             ## generate high resolution images if needed
             if (hi.res) {
-                ## FIX: tiff-hires dev.off problem
+
                 file.hi.res <- sprintf('%s-hires.%s', file.name, graph.output)
+
                 if (graph.output %in% c('bmp', 'jpeg', 'png', 'tiff')) {
                     do.call(graph.output, list(file.hi.res, width = hi.res.width, height = hi.res.height, res = hi.res.res, ...))
                 } else {
+
                     if (.Platform$OS.type == 'unix')
                         file.symlink(file, file.hi.res)
                     else
                         do.call(graph.output, list(file.hi.res, width = hi.res.width/hi.res.res, height = hi.res.height/hi.res.res, ...)) # TODO: font-family?
                 }
+
                 if ((graph.output %in% c('bmp', 'jpeg', 'png', 'tiff')) | (.Platform$OS.type != 'unix')) {
                     if (check.output)
                         suppressWarnings(eval(parse(text = src), envir = env.hires))
@@ -385,8 +416,10 @@ evals <- function(txt = NULL, ind = NULL, body = NULL, classes = NULL, hooks = N
                         suppressWarnings(eval(parse(text = src), envir = env))
                     clear.devs()
                 }
+
             }
         } else {
+
             if (hi.res & check.output)
                 env.hires <- env
         }
