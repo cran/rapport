@@ -2,15 +2,16 @@
 \alias{rapport}
 \title{Evaluate Template}
 \usage{
-  rapport(fp, data = NULL, ..., reproducible = FALSE,
-    header.levels.offset = 0,
-    rapport.mode = getOption("rapport.mode"),
-    graph.output = getOption("graph.format"),
-    graph.width = getOption("graph.width"),
-    graph.height = getOption("graph.height"),
-    graph.res = getOption("graph.res"),
-    graph.hi.res = getOption("graph.hi.res"),
-    graph.replay = getOption("graph.record"))
+  rapport(fp, data = NULL, ..., env = new.env(),
+    reproducible = FALSE, header.levels.offset = 0,
+    graph.output = evalsOptions("graph.output"),
+    file.name = getOption("rp.file.name"),
+    file.path = getOption("rp.file.path"),
+    graph.width = evalsOptions("width"),
+    graph.height = evalsOptions("height"),
+    graph.res = evalsOptions("res"),
+    graph.hi.res = evalsOptions("hi.res"),
+    graph.replay = evalsOptions("graph.recordplot"))
 }
 \arguments{
   \item{fp}{a template file pointer (see
@@ -21,6 +22,9 @@
   \item{...}{matches template inputs in format 'key =
   "value"'}
 
+  \item{env}{an environment where template commands be
+  evaluated (defaults to \code{new.env()}}
+
   \item{reproducible}{a logical value indicating if the
   call and data should be stored in template object, thus
   making it reproducible (see \code{\link{tpl.rerun}} for
@@ -29,14 +33,18 @@
   \item{header.levels.offset}{number added to header levels
   (handy when using nested templates)}
 
-  \item{rapport.mode}{forces \code{rapport} to run in
-  \emph{performance} or \emph{debug} mode instead of normal
-  behaviour. Change this only if you really know what are
-  you doing! In \code{performance} mode \code{rapport} will
-  evaluate all templates in \code{strict} mode (see:
-  \code{evals(..., check.output = FALSE)}), while in
-  \code{debug} mode \code{rapport} will halt on first
-  error.}
+  \item{file.name}{set the file name of saved plots and
+  exported documents. A simple character string might be
+  provided where \code{\%N} would be replaced by an
+  auto-increment integer based on similar exported
+  document's file name , \code{\%n} an auto-increment
+  integer based on similar (plot) file names (see:
+  \code{?evalsOptions}), \code{\%T} by the name of the
+  template in action and \code{\%t} by some uniqe random
+  characters based on \code{\link{tempfile}}.}
+
+  \item{file.path}{path of a directory where to store
+  generated images and exported reports}
 
   \item{graph.output}{the required file format of saved
   plots (optional)}
@@ -75,19 +83,15 @@
   inputs.
 }
 \details{
-  Default parameters are read from \code{options}:
+  Default parameters are read from \code{evalsOptions()}
+  and the following \code{options}:
 
-  \itemize{ \item 'rapport.mode', \item 'graph.format',
-  \item 'graph.width', \item 'graph.height', \item
-  'graph.res', \item 'graph.hi.res'. }
+  \itemize{ \item 'rp.file.name', \item 'rp.file.path', }
 }
 \examples{
 \dontrun{
 rapport("example", ius2008, var = "leisure")
 rapport("example", ius2008, var = "leisure", desc = FALSE, hist = TRUE, theme = "Set1")
-rapport("example", ius2008, var = "leisure", rapport.mode = 'debug')
-rapport("example", ius2008, var = "leisure", rapport.mode = 'performance')
-## Or set \\code{'rapport.mode'} option to \\code{debug}, \\code{performance} or back to \\code{normal}.
 
 ## generating high resolution images also
 rapport("example", ius2008, var="leisure", hist = TRUE, graph.hi.res = TRUE)

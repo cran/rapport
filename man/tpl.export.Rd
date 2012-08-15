@@ -1,18 +1,20 @@
 \name{tpl.export}
 \alias{tpl.export}
-\title{Export rapport class}
+\title{Export rapport object}
 \usage{
-  tpl.export(rp = NULL, file = NULL, append = FALSE,
+  tpl.export(rp = NULL, file, append = FALSE,
     create = TRUE, open = TRUE,
-    date = format(Sys.time(), getOption("rp.date.format")),
-    desc = TRUE, format = "html", backend = "pandoc",
-    options = NULL, logo = TRUE)
+    date = pander.return(Sys.time()), desc = TRUE,
+    format = "html", options = "", logo = TRUE)
 }
 \arguments{
   \item{rp}{a rapport class object or list of rapport class
   objects}
 
-  \item{file}{filename (NULL returns a tempfile)}
+  \item{file}{filename of the generated document. Inherited
+  from rapport class if not set. If \code{file} is set with
+  path (not equal to \code{getwd()}), please set an
+  absolute path for images (see: \code{evalsOptions()}).}
 
   \item{append}{FALSE (new report created) or an R object
   (class of "Report") to which the new report will be
@@ -27,18 +29,20 @@
   \item{date}{character string as the date field of the
   report. If not set, current time will be set.}
 
-  \item{desc}{add Description of the rapport class
+  \item{desc}{add \code{Description} of the rapport class
   (template)? Default set to TRUE.}
 
-  \item{format}{format of the wanted report, see:
-  \code{ascii:::asciiOpts(".outputs")}}
+  \item{format}{format of the wanted report. See Pandoc's
+  user manual for details. In short, choose something like:
+  \code{html}, \code{pdf}, \code{odt} or \code{docx}.}
 
-  \item{backend}{backend for the format conversions, see:
-  \code{ascii:::asciiOpts(".backends")}}
-
-  \item{options}{command line options passed to backend}
+  \item{options}{options passed to \code{Pandoc.convert}.}
 
   \item{logo}{add rapport logo}
+}
+\value{
+  filepath on \code{create = TRUE}, \code{Report} class
+  otherwise
 }
 \description{
   This function exports rapport class objects to various
@@ -52,19 +56,17 @@
 
   Default parameters are read from \code{options}:
 
-  \itemize{ \item "getOption('rp.date.format')", \item
-  "getOption('tpl.user')", \item "getOption('tpl.email')".
-  }
+  \itemize{ \item 'tpl.user' }
 
-  Please be sure to set \code{'tpl.user'} and
-  \code{'tpl.email'} options with \code{options()} to get
-  your name in the head of your generated reports!
+  Please be sure to set \code{'tpl.user'} option with
+  \code{options()} to get your name in the head of your
+  generated reports!
 }
 \examples{
 \dontrun{
 
 ## eval some template
-x <- rapport('descriptives-univar', data=mtcars, var="hp")
+x <- rapport('example', data = mtcars, var="hp")
 
 ## try basic parameters
 tpl.export(x)
@@ -84,8 +86,8 @@ tpl.export(append=report, format='rst')
 ### exporting multiple reports at once
 tpl.export(tpl.example('example', 'all'))
 tpl.export(tpl.example('example', 'all'), format='odt')
-tpl.export(list(rapport('univar-descriptive', data=mtcars, var="hp"),
-    rapport('univar-descriptive', data=mtcars, var="mpg")))
+tpl.export(list(rapport('univar-descriptive', data = mtcars, var="hp"),
+    rapport('univar-descriptive', data = mtcars, var="mpg")))
 
 ### Never do this as being dumb:
 tpl.export()
@@ -98,8 +100,14 @@ tpl.export(tpl.example('example', 'all'), backend='t2t')
 
 ### Adding own custom CSS to exported HTML
 tpl.export(x, options=sprintf('-c \%s', system.file('templates/css/default.css', package='rapport')))
-## For other formats check out backend specific documentation!
-## E.g. pandoc uses "--reference-odt" as styles reference for odt exports.
 }
+}
+\references{
+  John MacFarlane (2012): _Pandoc User's Guide_.
+  \url{http://johnmacfarlane.net/pandoc/README.html}
+}
+\seealso{
+  \code{\link{rapport.html}} \code{\link{rapport.pdf}}
+  \code{\link{rapport.odt}} \code{\link{rapport.docx}}
 }
 

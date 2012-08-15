@@ -9,8 +9,25 @@
 #'     is.string(c("foo", "bar"))   # [1] FALSE
 #' @export
 is.string <- function(x){
-
     is.character(x) && length(x) == 1
+}
+
+
+#' Boolean
+#'
+#' Checks if provided object is a boolean i.e. a length-one logical vector.
+#' @param x an object to check
+#' @return a logical value indicating whether provided object is a boolean
+#' @examples \dontrun{
+#'     is.boolean(TRUE)                # [1] TRUE
+#'     # the following will work on most systems, unless you have tweaked global Rprofile
+#'     is.boolean(T)                   # [1] TRUE
+#'     is.boolean(1)                   # [1] FALSE
+#'     is.string(c("foo", "bar"))      # [1] FALSE
+#' }
+#' @export
+is.boolean <- function(x){
+    is.logical(x) && length(x) == 1
 }
 
 
@@ -46,39 +63,17 @@ alike.integer <- function(x){
 }
 
 
-#' Check plot creation
-#'
-#' This function checks if given expression generates a plot.
-#' @param cmd an expression that is to be tested
-#' @return a logical value
-#' @references See original thread for more details (\url{http://stackoverflow.com/a/2744434/457898}). Special thanks to Hadley Wickham for this one!
-#' @author Hadley Wickham <h.wickham@@gmail.com>
-#' @examples \dontrun{
-#'     makes.plot(plot(rnorm(100))) # returns TRUE
-#'     makes.plot(sample(10))       # returns FALSE
-#' }
-#' @export
-makes.plot <- function(cmd){
-
-    before <- .Internal(getSnapshot())
-    force(cmd)
-    after <- .Internal(getSnapshot())
-    dev.off()
-    !identical(before, after)
-}
-
-
 #' Trim Spaces
 #'
-#' Removes leading and/or trailing space(s) from a character vector value. By default, it removes only trailing spaces. In order to trim both leading and trailing spaces, pass \code{TRUE} to both \code{leading} and \code{trailing} arguments.
-#' @param x a character vector which needs whitespace trimming
+#' Removes leading and/or trailing space(s) from a character vector value. By default, it removes both leading and trailing spaces. In order to get fine-tune control on trailing, pass appropriate logical values to \code{leading} and \code{trailing} arguments.
+#' @param x a character vector which values need whitespace trimming
 #' @param leading a logical value indicating if leading spaces should be removed (defaults to \code{FALSE})
 #' @param trailing a logical value indicating if trailing spaces should be removed (defaults to \code{TRUE})
 #' @param re a character value containing a regex that defines a space character
 #' @param ... additional arguments for \code{\link{gsub}} function
 #' @return a character vector with removed spaces
 #' @export
-trim.space <- function(x, leading = FALSE, trailing = TRUE, re = '[:space:]', ...){
+trim.space <- function(x, leading = TRUE, trailing = TRUE, re = '[:space:]', ...){
 
     if (missing(x))
         stop('no string to trim spaces')
@@ -200,59 +195,6 @@ capitalise <- function(x){
 }
 
 
-#' Guess Mode
-#'
-#' "Guesses" a mode of provided character vector and converts it to appropriate mode.
-#' @param x an atomic vector to guess its mode
-#' @param trim.white a logical value indicating whether white spaces should be removed before guessing
-#' @return an atomic vector with (hopefully) successfully guessed mode
-#' @examples \dontrun{
-#' guess.convert("234")
-#' guess.convert("234.23")
-#' guess.convert("234.23.234")
-#' guess.convert("TRUE")
-#' guess.convert("TRUE         ")
-#' guess.convert("     TRUE         ", TRUE)
-#' }
-#' @export
-guess.convert <- function(x, trim.white = FALSE){
-    ## you can't polish a turd, write a new one!!!
-
-    stopifnot(is.vector(x, 'character'))
-
-    if (isTRUE(trim.white))
-        x <- trim.space(x, TRUE)
-
-    if (all(grepl('^(TRUE|FALSE)$', x)))
-        as.logical(x)
-    else if (all(grepl('^-?[[:digit:]]+$', x)))
-        as.integer(x)
-    else if (all(grepl('^-?[[:digit:]]+\\.[[:digit:]]+$', x)))
-        as.numeric(x)
-    else if (all(grepl('^NULL$', x)))
-        NULL
-    else
-        x
-}
-
-
-#' Wrap Vector Elements
-#'
-#' Wraps vector elements with string provided in \code{wrap} argument.
-#' @param x a vector to wrap
-#' @param wrap a string to wrap around vector elements
-#' @return a string with wrapped elements
-#' @examples \dontrun{
-#' wrap("foobar")
-#' wrap(c("fee", "fi", "foo", "fam"), "_")
-#' }
-#' @export
-wrap <- function(x, wrap = '"'){
-    stopifnot(is.variable(x))
-    sprintf('%s%s%s', wrap, x, wrap)
-}
-
-
 #' Stop Execution with String Interpolated Messages
 #'
 #' This helper combines \code{stop} function with \code{sprintf} thus allowing string interpolated messages when execution is halted.
@@ -268,9 +210,38 @@ stopf <- function(s, ...){
 }
 
 
+#' Send Warning with String Interpolated Messages
+#'
+#' Combines \code{warning} with \code{sprintf} thus allowing string interpolated warnings.
+#' @param s a character vector of format strings
+#' @param ... values to be interpolated
+#' @examples \dontrun{
+#' warningf("%.3f is not larger than %d and/or smaller than %d", pi, 10, 40)
+#' }
+#' @export
+warningf <- function(s, ...){
+    warning(sprintf(s, ...))
+}
+
+
+#' Send Message with String Interpolated Messages
+#'
+#' Combines \code{warning} with \code{sprintf} thus allowing string interpolated diagnostic messages.
+#' @param s a character vector of format strings
+#' @param ... values to be interpolated
+#' @examples \dontrun{
+#' messagef("%.3f is not larger than %d and/or smaller than %d", pi, 10, 40)
+#' }
+#' @export
+messagef <- function(s, ...){
+    message(sprintf(s, ...))
+}
+
+
+
 #' Empty Value
 #'
-#' Rails-inspired helper that checks if value is "empty", i.e. if it's of \code{NULL}, \code{NA}, \code{NaN}, \code{FALSE}, empty string or 0.
+#' Rails-inspired helper that checks if vector values are "empty", i.e. if it's of \code{NULL}, \code{NA}, \code{NaN}, \code{FALSE}, empty string or \code{0}. Note that unlike its `is.` siblings, `is.empty` is vectorised.
 #' @param x an object to check
 #' @param trim trim whitespace? (by default removes only trailing spaces)
 #' @param ... additional arguments for \code{\link{trim.space}}
@@ -286,16 +257,20 @@ stopf <- function(s, ...){
 #' @export
 is.empty <- function(x, trim = FALSE, ...){
 
-    if (is.null(x))
-        return (TRUE)
-    else if (is.na(x) || is.nan(x))
-        return (TRUE)
-    else if (is.character(x) && nchar(ifelse(trim, trim.space(x, ...), x)) == 0)
-        return (TRUE)
-    else if (is.logical(x) && !isTRUE(x))
-        return (TRUE)
-    else if (is.numeric(x) && x == 0)
-        return (TRUE)
-    else
-        return (FALSE)
+    if (length(x) <= 1) {
+        if (is.null(x))
+            return (TRUE)
+        else if (is.na(x) || is.nan(x))
+            return (TRUE)
+        else if (is.character(x) && nchar(ifelse(trim, trim.space(x, ...), x)) == 0)
+            return (TRUE)
+        else if (is.logical(x) && !isTRUE(x))
+            return (TRUE)
+        else if (is.numeric(x) && x == 0)
+            return (TRUE)
+        else
+            return (FALSE)
+    } else {
+        sapply(x, is.empty)
+    }
 }

@@ -1,11 +1,10 @@
 <!--head
 Title:          Outlier tests
-Author:         Gergely Daróczi 
+Author:         Gergely Daróczi, Dániel Nagy
 Email:          gergely@snowl.net
-Description:    This template will check if provided variable has any outliers. 
+Description:    This template will check if provided variable has any outliers.
 Packages:       outliers
 Data required:  TRUE
-Strict:         TRUE
 Example:        rapport('outlier-test', data=ius2008, var='edu')
                 rapport('outlier-test', data=ius2008, var='edu', lund.res=FALSE)
                 rapport('outlier-test', data=ius2008, var='edu', lund.res=FALSE, references=FALSE, grubb=FALSE, dixon=FALSE)
@@ -17,63 +16,92 @@ grubb           | TRUE     | Grubb's test    | Show Grubb's test?
 dixon           | TRUE     | Dixon's test    | Show Dixon's test?
 head-->
 
-# Boxplot
+# Introduction
 
-<%
-print(rp.boxplot(var))
+An outlying observation, or outlier, is one that appears to deviate markedly from other members of the sample in which it occurs.
+There are several ways to detect the outliers of our data. However, we cannot say one of them is the perfect method for that, thus it could be useful to take different methods into consideration.
+We present here four of them, one by a chart (a Box Plot based on IQR) and three by statistical descriptions (Lund Test, Grubb's test, Dixon's test).
+
+## References
+
+  * Grubbs, F. E.: 1969, Procedures for detecting outlying observations in samples. Technometrics 11, pp. 1-21.
+
+# Charts
+
+Among the graphical displays the Box plots are quite widespread, because of their several advantages. For example, one can easily get approximately punctual first impression from the data and one can visually see the positions of the (possible) outliers, with the help of them.
+
+The Box Plot we used here is based on IQR (Interquartile Range), which is the difference between the higher and the lower quartiles. On the chart the blue box shows the "middle-half" of the data, the so-called whiskers shows the border where from the possible values can be called outliers. The lower whisker is placed 1.5 times below the first quartile, similarly the higher whisker 1.5 times above the third quartile.
+
+<%=
+set.caption(sprintf('Boxplot: %s', rp.name(var)))
+rp.boxplot(var)
 %>
+
+## References
+
+  * Chambers, John, William Cleveland, Beat Kleiner, and Paul Tukey, (1983), Graphical Methods for Data Analysis, Wadsworth.
+  * Upton, Graham; Cook, Ian (1996). Understanding Statistics. Oxford University Press. p. 55.
 
 # Lund test
 
-It seems that <%length(rp.outlier(var))%> extreme values can be found in "<%rp.label(var)%>". <%ifelse(length(rp.outlier(var)) > 0, sprintf('These are: %s.', paste(rp.outlier(var), collapse=', ')), '')%>
+It seems that <%=out <- rp.outlier(var); length(out)%> extreme values can be found in "<%=rp.label(var)%>". <%=ifelse(length(out) > 0, sprintf('These are: %s.', p(out)), '')%>
 
 ## Explanation
 
-The above test for outliers was based on *lm(1 ~ <%rp.name(var)%>)*:
+The above test for outliers was based on *lm(<%=rp.name(var)%> ~ 1)*:
 
-<%
+<%=
+set.caption(sprintf('Linear model: %s ~ 1', rp.name(var)))
 lm(var ~ 1)
 %>
 
-## <% if (lund.res) 'The residuals returned:'%>
+<% if (lund.res) { %>
 
-<%
-if (lund.res) p(rp.round(rstandard(lm(var ~ 1))), limit=Inf)
-%>
+## The residuals returned:
 
-## <%if (references) 'References'%>
+<%=rstandard(lm(var ~ 1))%>
 
-<%
-if (references) ' * Lund, R. E. 1975, "Tables for An Approximate Test for Outliers in Linear Models", Technometrics, vol. 17, no. 4, pp. 473-476.
- * Prescott, P. 1975, "An Approximate Test for Outliers in Linear Models", Technometrics, vol. 17, no. 1, pp. 129-132.'
-%>
+<% } %>
 
-# <% if (grubb & suppressMessages(suppressWarnings(require(outliers)))) 'Grubb\'s test'%>
+<%if (references) { %>
 
-<%
-if (grubb) if (suppressMessages(suppressWarnings(require(outliers)))) {
-test <- grubbs.test(var)
-sprintf('%s shows that %s (p=%s).', test$method, ifelse(test$p.value>0.05, 'there are no outliers', test$alternative), rp.round(test$p.value))   
-} else 'Cannot run test, please install "outliers" package!'
-%>
+## References
 
-## <%if (grubb & references) 'References'%>
+  * Lund, R. E. 1975, "Tables for An Approximate Test for Outliers in Linear Models", Technometrics, vol. 17, no. 4, pp. 473-476.
+  * Prescott, P. 1975, "An Approximate Test for Outliers in Linear Models", Technometrics, vol. 17, no. 1, pp. 129-132.
 
-<%
-if (references) ' * Grubbs, F.E. (1950). Sample Criteria for testing outlying observations. Ann. Math. Stat. 21, 1, 27-58.'
-%>
+<% } %>
 
-# <% if (dixon & suppressMessages(suppressWarnings(require(outliers)))) 'Dixon\'s test'%>
+<%if (grubb & suppressMessages(suppressWarnings(require(outliers)))) { %>
 
-<%
-if (dixon) if (suppressMessages(suppressWarnings(require(outliers)))) {
-test <- chisq.out.test(var)
-sprintf('%s shows that %s (p=%s).', test$method, ifelse(test$p.value>0.05, 'there are no outliers', test$alternative), rp.round(test$p.value))   
-} else 'Cannot run test, please install "outliers" package!'
-%>
+# Grubb's test
 
-## <%if (dixon & references) 'References'%>
+<%=test <- grubbs.test(var); test$method%> shows that <%=ifelse(test$p.value>0.05, 'there are no outliers', test$alternative)%> (p=<%=test$p.value%>).
 
-<%
-if (references) ' * Dixon, W.J. (1950). Analysis of extreme values. Ann. Math. Stat. 21, 4, 488-506.'
-%>
+<%if (references) {%>
+
+## References
+
+  * Grubbs, F.E. (1950). Sample Criteria for testing outlying observations. Ann. Math. Stat. 21, 1, 27-58.
+
+<% } %>
+
+<% } %>
+
+
+
+<% if (dixon & suppressMessages(suppressWarnings(require(outliers)))) { %>
+
+# Dixon's test
+
+<%=test <- chisq.out.test(var); test$method%> shows that <%=ifelse(test$p.value>0.05, 'there are no outliers', test$alternative)%> (p=<%=test$p.value%>).
+
+<%if (references) { %>
+
+## References
+
+  * Dixon, W.J. (1950). Analysis of extreme values. Ann. Math. Stat. 21, 4, 488-506.
+
+<% } %>
+
+<% } %>

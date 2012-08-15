@@ -2,7 +2,7 @@
 \alias{get.tags}
 \title{Tag Values}
 \usage{
-  get.tags(tag.type = c("all", "chunk.open", "chunk.close", "inline.open", "inline.close", "header.open", "header.close", "comment.open", "comment.close"),
+  get.tags(tag.type = c("all", "header.open", "header.close", "comment.open", "comment.close"),
     preset = c("user", "default"))
 }
 \arguments{
@@ -22,13 +22,13 @@
 \details{
   Default parameters are read from \code{options}:
 
-  \itemize{ \item 'chunk.open', \item 'chunk.close', \item
-  'inline.open', \item 'inline.close', \item 'header.open',
-  \item 'header.close', \item 'comment.open', \item
-  'comment.close'. }
+  \itemize{ \item 'header.open', \item 'header.close',
+  \item 'comment.open', \item 'comment.close'. }
 }
 \examples{
+\dontrun{
 get.tags()        # same as 'get.tags("all")'
-get.tags("chunk.open")
+get.tags("header.open")
+}
 }
 

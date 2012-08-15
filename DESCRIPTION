@@ -6,22 +6,23 @@ Encoding: UTF-8
 Description: A package that facilitates creation of reproducible
         statistical report templates. Once created, rapport templates
         can be exported to various external formats (HTML, LaTeX, PDF,
-        ODT, etc.) with pandoc converter as a backend.
+        ODT etc.) with Pandoc as the converter backend.
 Author: Aleksandar Blagotić <aca.blagotic@gmail.com> and Gergely
         Daróczi <gergely@snowl.net>
-Version: 0.31
-Date: 2012-02-08
+Version: 0.40
+Date: 2012-08-15
 URL: http://rapport-package.info/
-BugReports: https://github.com/aL3xa/rapport/issues
+BugReports: https://github.com/rapporter/rapport/issues
 License: AGPL-3
 LazyData: yes
 LazyLoad: yes
-Depends: R (>= 2.14.0), grDevices, ascii, evaluate, lattice,
-        RColorBrewer, reshape
-Collate: 'crypt.R' 'eval.R' 'export.R' 'graphs.R' 'init.R' 'ius2008.R'
-        'print.methods.R' 'rapport.R' 'rp_helpers.R' 'stat_helpers.R'
-        'stats_univar.R' 'tables.R' 'template.R' 'utils.R'
-        'tpl-check.R'
-Packaged: 2012-02-08 20:46:31 UTC; omleny
+Depends: R (>= 2.15.0), lattice, plyr, pander
+Imports: grDevices, reshape
+SystemRequirements: Pandoc (http://johnmacfarlane.net/pandoc) for
+        exporting markdown files to other formats.
+Collate: 'export.R' 'graphs.R' 'init.R' 'ius2008.R' 'print.methods.R'
+        'rapport.R' 'rp_helpers.R' 'stat_helpers.R' 'stats_univar.R'
+        'tables.R' 'template.R' 'utils.R' 'tpl-check.R'
+Packaged: 2012-08-21 16:31:17 UTC; omleny
 Repository: CRAN
-Date/Publication: 2012-02-08 21:20:38
+Date/Publication: 2012-08-21 17:16:37
