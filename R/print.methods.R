@@ -6,29 +6,24 @@
 #' @method print rp.meta
 #' @S3method print rp.meta
 print.rp.meta <- function(x, ...){
-
     .x <- x                             # backup object
-    mc <- match.call()
-    ind <- c('title', 'author', 'email', 'desc', 'example')
+    ind <- c('title', 'author', 'email', 'description', 'example')
     email <- if (is.null(x$email)) '' else sprintf(' (%s)', x$email) # show email if any
-    exmpl <- if (is.null(x$example)) 'no examples found in template' else x$example # examples
     other.meta <- x[!names(x) %in% ind]
 
     fn <- function(x){
         titles <- names(x)
-        content <- sapply(x, function(y) sprintf('%s', if (is.null(y) || length(y) == 0) 'NULL' else y))
+        content <- sapply(x, function(y) sprintf('%s', if (is.null(y) || length(y) == 0) 'NULL' else paste0(y, collapse = ", ")))
         res <- c('\n', sprintf('%s:\t%s\n', titles, content))
     }
 
     catn(
-         sprintf('\n`%s`\n\n', x$title),
-         sprintf('by %s%s\n\n', x$author, email),
-         sprintf('%s\n', x$desc),
-         fn(other.meta),
-         sprintf('\n %s', c('Examples:', exmpl))
-         )
-
-    catn()
+        sprintf('\n "%s"\n\n', x$title),
+        sprintf('by %s%s\n\n', x$author, email),
+        sprintf('%s\n', x$description),
+        fn(other.meta),
+        if (!is.null(x$example)) sprintf('\n %s', c('Examples:', x$example))
+        )
 
     invisible(.x)
 }
@@ -42,41 +37,80 @@ print.rp.meta <- function(x, ...){
 #' @method print rp.inputs
 #' @S3method print rp.inputs
 print.rp.inputs <- function(x, ...){
-
-    catn('\nInput parameters')
+    catn('\n Inputs\n')
 
     if (length(x) == 0){
-        catn('No inputs defined!')
+        catn('Template contains no inputs.')
     } else {
-        sapply(x, function(x){
-
-            ## is field mandatory?
-            mand <- if (is.null(x$mandatory))
-                ''
+        sapply(x, function(x) {
+            ## length
+            input.item.txt <- ifelse(isTRUE(x$class == 'option'), 'option', ifelse(x$standalone, 'value', 'vector'))
+            len <- x$length
+            ## min == max
+            if (len$min == len$max)
+                len.txt <- sprintf('exactly %d %s%s', len$min, input.item.txt, ifelse(len$min > 1, 's', ''))
             else
-                ifelse(x$mandatory, '  >>REQUIRED<<', '')
+                len.txt <- sprintf('from %s to %s %ss', len$min, len$max, input.item.txt)
 
-            cat(
-                '\n',
-                sprintf('`%s` (%s)%s\n', x$name, x$label, mand),
-                sprintf(' %s\n', x$desc),
-                sprintf('    - type:\t%s\n', x$type),
-                sprintf('    - limits:\t%s\n',
-                        if (diff(unlist(x$limit)) == 0){
-                            sprintf('exactly %s variable%s', x$limit$min, ifelse(x$limit$min > 1, 's', ''))
-                        } else {
-                            sprintf('from %s, up to %s variables', x$limit$min, x$limit$max)
-                        }),
-                if (!is.null(x$default)){
-                    def <- x$default
-                    if (is.character(def))
-                        def <- p(def, '"', copula = 'or')
-                    sprintf('    - default value:\t%s\n', def)
-                })
-        })
-        catn()
-    }
-
+            ## prepare response vector
+            res <- c(
+                sprintf(' "%s" (%s)%s\n', x$name, x$label, ifelse(x$required, '  *required', '')),
+                sprintf('%s\n', x$description),
+                sprintf('  - class:\t\t%s\n', x$class),
+                sprintf('  - standalone:\t%s\n', ifelse(x$standalone, 'yes', 'no')),
+                sprintf('  - length:\t\t%s\n', len.txt))
+            if (isTRUE(x$matchable)) {
+                res <- c(res,
+                         paste0('  - matchable:\t\tTRUE', ifelse(x$allow_multiple, ' (multiple matches allowed)', ''), '\n'),
+                         paste0('  - options:\t\t', p(x$options, wrap = '"'), '\n')
+                         )
+            }
+            ## value
+            if (x$standalone && !is.null(x$value)) {
+                val.wrap <- ifelse(x$class %in% c('character', 'option'), '"', '')
+                res <- c(res, sprintf('  - value%s:\t\t%s\n', ifelse(length(x$value) > 1, 's', ''), p(as.character(x$value), wrap = val.wrap)))
+            }
+            ## class specific options
+            ## (only if class is specified)
+            if (!is.null(x$class))
+                switch(x$class,
+                       character = {
+                           ## nchar
+                           if (!is.null(x$nchar)) {
+                               chars <- x$nchar
+                               if (len$min == len$max)
+                                   nchar.txt <- sprintf('exactly %d character%s', chars$min, if (length(chars$min) > 1) 's' else '')
+                               else
+                                   nchar.txt <- sprintf('from %d to %d characters', chars$min, chars$max)
+                               res <- c(res, sprintf('  - nchar:\t\t%s\n', nchar.txt))
+                           }
+                           ## regexp
+                           if (!is.null(x$regexp))
+                               res <- c(res, sprintf('  - regexp:\t\t"%s"\n', x$regexp))
+                           ## ## matchable
+                           ## res <- c(res, sprintf('  - matchable:\t\t%s\n', x$matchable))
+                       },
+                       ## nlevels
+                       factor = {
+                           if (!is.null(x$nlevels)) {
+                               if (x$nlevels$min == x$nlevels$max)
+                                   s <- sprintf('exactly %d level%s', x$nlevels$min, if (x$nlevels$min > 1) 's' else '')
+                               else
+                                   s <- sprintf('from %d to %d levels', x$nlevels$min, x$nlevels$max)
+                               res <- c(res, sprintf('  - nlevels:\t\t%s\n', s))
+                           }
+                           ## ## matchable
+                           ## res <- c(res, sprintf('  - matchable:\t\t%s\n', x$matchable))
+                       },
+                       ## limits
+                       numeric = ,
+                       integer = {
+                           if (!is.null(x$limit))
+                               res <- c(res, sprintf('  - limits:\t\t%s <= x <= %s\n', x$limit$min, x$limit$max))
+                       })
+            catn(res)
+        })                              # end sapply
+    }                                   # end if (length(x) == 0)
     invisible(x)
 }
 
@@ -117,10 +151,11 @@ print.rapport <- function(x, ...) {
                'block' = {
                    if ('image' %in% part$robject$type)
                        images <- c(images, as.character(part$robject$result))
-                   cat(part$robject$output, sep = '\n')
-                   },
+                   if (length(part$robject$output) > 0)
+                       cat(part$robject$output, sep = '\n')
+               },
                'heading' = pandoc.header(part$text$eval, part$level),
-               cat(part$text$eval)
+               if (!grepl('^[\n]*$', part$text$eval)) cat( part$text$eval)
                )
 
     }

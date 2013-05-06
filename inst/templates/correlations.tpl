@@ -1,17 +1,51 @@
 <!--head
-Title:          Correlations
-Author:         Daróczi Gergely, Nagy Dániel
-Email:          gergely@snowl.net
-Description:    This template will return the correlation matrix of supplied numerical variables.
-Data required:  TRUE
-Example:        rapport('correlations', data=ius2008, vars=c('age', 'edu'))
-		rapport('correlations', data=ius2008, vars=c('age', 'edu', 'leisure'))
-		rapport('correlations', data=mtcars, vars=c('mpg', 'cyl', 'disp', 'hp', 'drat', 'wt', 'qsec', 'vs', 'am', 'gear', 'carb'))
-
-vars            | *numeric[2,50] | Variable                      | Numerical variables
-cor.matrix      | TRUE           | Correlation matrix            | Show correlation matrix (numbers)?
-cor.plot        | TRUE           | Scatterplot matrix            | Show scatterplot matrix (image)?
-quick.plot      | TRUE           | Using a sample for plotting   | If set to TRUE, the scatterplot matrix will be drawn on a sample size of max. 1000 cases not to render millions of points.
+meta:
+  title: Correlations
+  author: Daróczi Gergely, Nagy Dániel
+  email: gergely@snowl.net
+  example:
+  - rapport('correlations', data=ius2008, vars=c('age', 'edu'))
+  - rapport('correlations', data=ius2008, vars=c('age', 'edu', 'leisure'))
+  - rapport('correlations', data=mtcars, vars=c('mpg', 'cyl', 'disp', 'hp', 'drat',
+    'wt', 'qsec', 'vs', 'am', 'gear', 'carb'))
+  description: This template will return the correlation matrix of supplied numerical
+    variables.
+inputs:
+- name: vars
+  label: Variable
+  description: Numerical variables
+  class: numeric
+  length:
+    min: 2
+    max: 50
+  value: ~
+  required: TRUE
+  standalone: FALSE
+- name: cor.matrix
+  label: Correlation matrix
+  description: Show correlation matrix (numbers)?
+  class: logical
+  length: 1
+  value: TRUE
+  required: FALSE
+  standalone: TRUE
+- name: cor.plot
+  label: Scatterplot matrix
+  description: Show scatterplot matrix (image)?
+  class: logical
+  length: 1
+  value: TRUE
+  required: FALSE
+  standalone: TRUE
+- name: quick.plot
+  label: Using a sample for plotting
+  description: If set to TRUE, the scatterplot matrix will be drawn on a sample size
+    of max. 1000 cases not to render millions of points.
+  class: logical
+  length: 1
+  value: TRUE
+  required: FALSE
+  standalone: TRUE
 head-->
 
 # Introduction
@@ -73,7 +107,7 @@ There are no uncorrelated correlated (r < -0.2 or r > 0.2) variables.
 <%=
 if (cor.matrix) {
     set.caption('Correlation matrix')
-    cm <- round(cor(vars, use = 'complete.obs'), 4)
+    cm <- format(round(cor(vars, use = 'complete.obs'), 4), decimal.mark = panderOptions('decimal.mark'))
     d <- attributes(cm)
     for (row in attr(cm, 'dimnames')[[1]])
 	for (col in attr(cm, 'dimnames')[[2]]) {
@@ -105,7 +139,7 @@ if (cor.plot) {
         ## forked from ?pairs
         par(usr = c(0, 1, 0, 1))
         r   <- cor(x, y, use = 'complete.obs')
-        txt <- format(c(r, 0.123456789), digits = digits)[1]
+        txt <- format(c(r, 0.123456789), digits = digits, decimal.mark = panderOptions('decimal.mark'))[1]
         txt <- paste(prefix, txt, sep = "")
         if(missing(cex.cor))
             cex <- 0.8/strwidth(txt)

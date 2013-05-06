@@ -35,6 +35,7 @@ is.boolean <- function(x){
 #'
 #' Checks if provided object is a number, i.e. a length-one numeric vector.
 #' @param x an object to check
+#' @param integer logical: check if number is integer
 #' @return a logical value indicating whether provided object is a string
 #' @examples
 #' is.number(3)              # [1] TRUE
@@ -43,8 +44,9 @@ is.boolean <- function(x){
 #' is.number(NaN)            # [1] TRUE
 #' is.number(NA_integer_)    # [1] TRUE
 #' @export
-is.number <- function(x){
-    is.numeric(x) && length(x) == 1
+is.number <- function(x, integer = FALSE) {
+    check.fn <- if (isTRUE(integer)) is.integer else is.numeric
+    do.call(check.fn, list(x)) && length(x) == 1
 }
 
 
@@ -65,32 +67,24 @@ alike.integer <- function(x){
 
 #' Trim Spaces
 #'
-#' Removes leading and/or trailing space(s) from a character vector value. By default, it removes both leading and trailing spaces. In order to get fine-tune control on trailing, pass appropriate logical values to \code{leading} and \code{trailing} arguments.
+#' Removes leading and/or trailing space(s) from a character vector. By default, it removes both leading and trailing spaces.
 #' @param x a character vector which values need whitespace trimming
-#' @param leading a logical value indicating if leading spaces should be removed (defaults to \code{FALSE})
-#' @param trailing a logical value indicating if trailing spaces should be removed (defaults to \code{TRUE})
-#' @param re a character value containing a regex that defines a space character
+#' @param what which part of the string should be trimmed. Defaults to \code{both} which removes trailing and leading spaces. If \code{none}, no trimming will be performed.
+#' @param space.regex a character value containing a regex that defines a space character
 #' @param ... additional arguments for \code{\link{gsub}} function
-#' @return a character vector with removed spaces
+#' @return a character vector with (hopefully) trimmed spaces
 #' @export
-trim.space <- function(x, leading = TRUE, trailing = TRUE, re = '[:space:]', ...){
-
+trim.space <- function(x, what = c('both', 'leading', 'trailing', 'none'), space.regex = '[:space:]', ...){
     if (missing(x))
-        stop('no string to trim spaces')
-
-    if (leading == FALSE & trailing == FALSE)
-        stop("it looks like you don't want to trim those spaces, don't you?")
-
-    if (leading == TRUE & trailing == FALSE)
-        re <- sprintf('^+[%s]', re)
-
-    if (leading == FALSE & trailing == TRUE)
-        re <- sprintf('[%s]+$', re)
-
-    if (leading == TRUE & trailing == TRUE)
-        re <- sprintf('^[%s]+|[%s]+$', re, re)
-
-    gsub(re, '', x, ...)
+        stop('nothing to trim spaces to =(')
+    re <- switch(match.arg(what),
+                 both     = sprintf('^[%s]+|[%s]+$', space.regex, space.regex),
+                 leading  = sprintf('^[%s]+', space.regex),
+                 trailing = sprintf('[%s]+$', space.regex),
+                 none     = {
+                     return (x)
+                 })
+    vgsub(re, '', x, ...)
 }
 
 
@@ -114,7 +108,7 @@ adj.rle <- function(x){
 #'
 #' A simple wrapper for \code{\link{cat}} function that appends newline to output.
 #' @param ... arguments to be passed to \code{cat} function
-#' @return None (invisible ‘NULL’).
+#' @return None (invisible \code{NULL}).
 #' @export
 catn <- function(...){
     cat(..., "\n")
@@ -142,8 +136,9 @@ vgsub <- function(pattern, replacement, x, ...){
 #'
 #' Convert character vector to camelcase - capitalise first letter of each word.
 #' @param x a character vector to be converted to camelcase
-#' @param sep a string containing regular expression word delimiter
+#' @param delim a string containing regular expression word delimiter
 #' @param upper a logical value indicating if the first letter of the first word should be capitalised (defaults to \code{FALSE})
+#' @param sep a string to separate words
 #' @param ... additional arguments to be passed to \code{strsplit}
 #' @return a character vector with strings put in camelcase
 #' @examples
@@ -156,21 +151,25 @@ vgsub <- function(pattern, replacement, x, ...){
 #'     tocamel(c("foobar", "foo.bar", "camel_case", "a.b.c.d"))
 #'     ## [1] "foobar"    "fooBar"    "camelCase" "aBCD"
 #' @export
-tocamel <- function(x, sep = '[^[:alnum:]]', upper = FALSE, ...){
+tocamel <- function(x, delim = '[^[:alnum:]]', upper = FALSE, sep = '', ...){
 
     stopifnot(is.character(x))
-    stopifnot(is.string(sep))
+    stopifnot(is.string(delim))
 
-    s <- strsplit(x, sep, ...)
+    s <- strsplit(x, delim, ...)
 
     ## TODO: first.case = FALSE by default
     sapply(s, function(y){
-        first <- substring(y, 1, 1)
-        if (isTRUE(upper))
-            first <- toupper(first)
-        else
-            first[-1] <- toupper(first[-1])
-        paste(first, substring(y, 2), sep = '', collapse = '')
+        if (any(is.na(y))) {
+            y
+        } else {
+            first <- substring(y, 1, 1)
+            if (isTRUE(upper))
+                first <- toupper(first)
+            else
+                first[-1] <- toupper(first[-1])
+            paste(first, substring(y, 2), sep = '', collapse = sep)
+        }
     })
 }
 
@@ -241,36 +240,41 @@ messagef <- function(s, ...){
 
 #' Empty Value
 #'
-#' Rails-inspired helper that checks if vector values are "empty", i.e. if it's of \code{NULL}, \code{NA}, \code{NaN}, \code{FALSE}, empty string or \code{0}. Note that unlike its `is.` siblings, `is.empty` is vectorised.
-#' @param x an object to check
-#' @param trim trim whitespace? (by default removes only trailing spaces)
-#' @param ... additional arguments for \code{\link{trim.space}}
-#' @examples
-#' is.empty(NULL)     # returns [1] TRUE
-#' is.empty(NA)       # returns [1] TRUE
-#' is.empty(NaN)      # returns [1] TRUE
-#' is.empty("")       # returns [1] TRUE
-#' is.empty(0)        # returns [1] TRUE
-#' is.empty(0.00)     # returns [1] TRUE
-#' is.empty("foobar") # returns [1] FALSE
-#' is.empty("    ")   # returns [1] FALSE
+#' Rails-inspired helper that checks if vector values are "empty", i.e. if it's: \code{NULL}, zero-length, \code{NA}, \code{NaN}, \code{FALSE}, an empty string or \code{0}. Note that unlike its native R \code{is.<something>} sibling functions, \code{is.empty} is vectorised (hence the "values").
+#' @param x an object to check its emptiness
+#' @param trim trim whitespace? (\code{TRUE} by default)
+#' @param ... additional arguments for \code{\link{sapply}}
+#' @examples \dontrun{
+#' is.empty(NULL)     # [1] TRUE
+#' is.empty(c())      # [1] TRUE
+#' is.empty(NA)       # [1] TRUE
+#' is.empty(NaN)      # [1] TRUE
+#' is.empty("")       # [1] TRUE
+#' is.empty(0)        # [1] TRUE
+#' is.empty(0.00)     # [1] TRUE
+#' is.empty("    ")   # [1] TRUE
+#' is.empty("foobar") # [1] FALSE
+#' is.empty("    ", trim = FALSE)    # [1] FALSE
+#' # is.empty is vectorised!
+#' all(is.empty(rep("", 10)))        # [1] TRUE
+#' all(is.empty(matrix(NA, 10, 10))) # [1] TRUE
+#' }
 #' @export
-is.empty <- function(x, trim = FALSE, ...){
-
+is.empty <- function(x, trim = TRUE, ...) {
     if (length(x) <= 1) {
         if (is.null(x))
             return (TRUE)
-        else if (is.na(x) || is.nan(x))
+        if (length(x) == 0)
             return (TRUE)
-        else if (is.character(x) && nchar(ifelse(trim, trim.space(x, ...), x)) == 0)
+        if (is.na(x) || is.nan(x))
             return (TRUE)
-        else if (is.logical(x) && !isTRUE(x))
+        if (is.character(x) && nchar(ifelse(trim, trim.space(x), x)) == 0)
             return (TRUE)
-        else if (is.numeric(x) && x == 0)
+        if (is.logical(x) && !isTRUE(x))
             return (TRUE)
-        else
-            return (FALSE)
-    } else {
-        sapply(x, is.empty)
-    }
+        if (is.numeric(x) && x == 0)
+            return (TRUE)
+        return (FALSE)
+    } else
+        sapply(x, is.empty, trim = trim, ...)
 }
