@@ -1,0 +1,141 @@
+<!--head
+meta:
+  title: Two-sample t-test Template
+  author: Aleksandar Blagotić
+  description: A two-sample t-test report with table of descriptives, diagnostic tests and t-test
+    specific statistics.
+  email: ~
+  packages:
+  - nortest
+  - rapportools
+  - pander
+  example:
+  - rapport("TTestTwoSample", ius2008, x = "leisure", y = "gender")
+inputs:
+- name: x
+  label: X variable
+  description: Dependent (response) variable
+  class: numeric
+  length:
+    min: 1.0
+    max: 1.0
+  value: ~
+  required: yes
+  standalone: no
+- name: 'y'
+  label: Y variable (factor variable with only two levels)
+  description: Independent variable (factor, with only two levels)
+  class: factor
+  length:
+    min: 1.0
+    max: 1.0
+  value: ~
+  required: yes
+  standalone: no
+- name: alter
+  label: Alternative hypothesis
+  description: Whether two-sided, greater or less variant will be applied
+  class: character
+  length:
+    min: 1.0
+    max: 1.0
+  options:
+  - two.sided
+  - less
+  - greater
+  value: two.sided
+  matchable: yes
+  allow_multiple: no
+  required: no
+  standalone: yes
+- name: paired
+  label: Paired t-test
+  description: Carry out paired t-test or not
+  class: logical
+  length:
+    min: 1.0
+    max: 1.0
+  value: no
+  required: no
+  standalone: yes
+- name: var.equal
+  label: Variance equality
+  description: 'Equal variances assumed: choose automatically or not'
+  class: logical
+  length:
+    min: 1.0
+    max: 1.0
+  value: no
+  required: no
+  standalone: yes
+- name: ci.level
+  label: Confidence interval
+  description: Confidence interval level
+  class: numeric
+  length:
+    min: 1.0
+    max: 1.0
+  value: 0.95
+  limit:
+    min: 0.0
+    max: 1.0
+  required: no
+  standalone: yes
+head-->
+
+<%=
+if (nlevels(y)>2) {stop('"y" must be a factor variable with only two levels. If you need to analyse data with more groups, please use ANOVA')}
+
+tt <- t.test(formula = x ~ y, alternative = alter, paired = paired, var.equal = var.equal, conf.level = ci.level)
+variant <- ifelse(paired, "paired-samples", "independent samples")
+%>
+
+# Introduction
+
+In a nutshell, [two-sample t-test](http://en.wikipedia.org/wiki/Student%27s_t-test#Independent_two-sample_t-test) is a statistical test that assesses hypothesis of equality of two means. But in theory, any hypothesis test that yields statistic which follows [_t-distribution_](https://en.wikipedia.org/wiki/Student%27s_t-distribution) can be considered a _t-test_. The most common usage of _two-sample t-test_ is to:
+
+ - compare means of two variables from independent samples - **independent samples _t-test_**
+ - compare means of two variables from dependent samples - **paired-samples _t-test_**
+
+# Overview
+
+<%= capitalise(variant) %> _t-test_ is carried out with <%= x.label %> as dependent variable<%= if (!is.null(y)) sprintf(", and %s as independent variable", y.label) else "" %>. Confidence interval is set to <%= pct(ci.level * 100, 0) %>. <%= if (!is.null(variant)) sprintf("Equality of variances %s assumed.", ifelse(var.equal, "was", "wasn't")) else "" %>
+
+# Descriptives
+
+In order to get more insight on the underlying data, a table of basic descriptive statistics is displayed below.
+
+<%=
+if (is.factor(y)){
+   rp.desc(x, y, c('min', 'max', 'mean', 'sd', 'var', 'median', 'IQR', 'skewness', 'kurtosis'), rapport.data)
+}
+%>
+
+# Diagnostics
+
+Since _t-test_ is a parametric technique, it sets some basic assumptions on distribution shape: it has to be _normal_ (or approximately normal). A few normality test are to be applied, in order to screen possible departures from normality.
+
+## Normality Tests
+
+We will use _Shapiro-Wilk_, _Lilliefors_ and _Anderson-Darling_ tests to screen departures from normality in the response variable (<%= x.label %>).
+
+<%=
+if (length(x)>5000) {
+  ntest <- htest(sample(x, 5000), shapiro.test)
+  ntest <- rbind(ntest, htest(x, lillie.test, ad.test))
+} else {
+  ntest <- htest(x, shapiro.test, lillie.test, ad.test)
+}
+ntest
+%>
+
+As you can see, based on the [p-values](http://en.wikipedia.org/wiki/P-value), applied tests <%= ifelse(all(ntest$p < .05), "confirm departures from normality", "yield different results on hypotheses of normality, so you may want to stick with one you find most appropriate or you trust the most") %>.<%= ifelse(length(x)>5000, " Please note: The Shapiro-Wilk test was only run on a sample (N=5000) of the data.", "") %>
+
+
+# Results
+
+<%=
+with(tt, data.frame(statistic, df = parameter, p = p.value, `CI(lower)` = conf.int[1], `CI(upper)` = conf.int[2], check.names = FALSE))
+%>
+
+<%= tt$method %> was applied and, based on the p-value, significant differences <%= ifelse(tt$p.value < 1 - ci.level, "were", "weren't") %> found.

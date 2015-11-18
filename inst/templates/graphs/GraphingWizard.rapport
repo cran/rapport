@@ -1,0 +1,61 @@
+<!--head
+meta:
+  title: Graph Wizard template
+  author: Daniel Nagy, Gergely Daróczi
+  description: In this template Rapporter will present you a graphing wizard template, where we will show you a visual representation.
+  email: ~
+  packages: ~
+  example:
+  - rapport('graphs/GraphingWizard', data = ius2008, variables = 'student')
+  - rapport('graphs/GraphingWizard', data = ius2008, variables = 'edu')
+  - rapport('graphs/GraphingWizard', data = ius2008, variables = 'socnet')
+  - rapport('graphs/GraphingWizard', data = ius2008, variables = c('edu', 'game'))
+  - rapport('graphs/GraphingWizard', data = ius2008, variables = c('game', 'gender'))
+  - rapport('graphs/GraphingWizard', data = ius2008, variables = c('edu', 'age'))
+inputs:
+- name: variables
+  label: Used Variables
+  description: These are the variables which Wizard will use
+  length:
+    min: 1.0
+    max: 2.0
+  required: yes
+  standalone: no
+head-->
+
+<%=
+## DRY
+v  <- na.omit(variables)
+vl <- ifelse(is.null(nrow(variables)), 1, 2)
+if (vl == 1) {
+    vc <- class(v)
+} else {
+    vc <- sapply(v, class, USE.NAMES = FALSE)
+}
+
+## force levels of measurement
+vc <- sapply(vc, function(x) {
+    if (any(x %in% c('character', 'factor', 'logical')))
+        return('factor')
+    if (any(x %in% c('integer', 'numeric', 'complex')))
+        return('numeric')
+})
+
+if (vl == 1) {
+    if (vc == 'factor') {
+        rapport('graphs/Barchart', data = rapport.data, var = variables.name)
+    } else {
+        rapport('graphs/Densityplot', data = rapport.data, var = variables.name)
+    }
+} else {
+    if ('factor' %in% vc && 'numeric' %in% vc) {
+        rapport('graphs/Boxplot', data = rapport.data, var1 = variables.name[which(vc == 'numeric')], var2 = variables.name[which(vc == 'factor')])
+    } else {
+        if ('factor' %in% vc) {
+            rapport('graphs/MosaicChart', data = rapport.data, x = variables.name[1], y = variables.name[2])
+        } else {
+            rapport('graphs/Scatterplot', data = rapport.data, x = variables.name[1], y = variables.name[2])
+        }
+    }
+}
+%>

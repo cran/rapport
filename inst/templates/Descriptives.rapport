@@ -1,0 +1,81 @@
+<!--head
+meta:
+  title: Descriptive statistics
+  author: Gergely Daróczi, Daniel Nagy
+  description: This template will return descriptive statistics of a numerical or frequency table of a categorical variable.
+  email: gergely@snowl.net
+  packages:
+  - rapportools
+  - lattice
+  - pander
+  example:
+  - rapport('Descriptives', data=ius2008, var='gender')
+  - rapport('Descriptives', data=ius2008, var='age')
+  - rapport('Descriptives', data=mtcars, var='hp')
+inputs:
+- name: var
+  label: Variable
+  description: Categorical or numerical variable. This template will determine the
+    measurement level of the given variable.
+  length:
+    min: 1.0
+    max: 1.0
+  value: ~
+  required: yes
+  standalone: no
+head-->
+
+# *<%= name(var) %>*<%= ifelse(label(var) == name(var), '', sprintf(' ("%s")', label(var))) %>
+
+The dataset has <%= nvar<-as.numeric(var); length(nvar) %> observations with <%= nvalid(nvar) %> valid values (missing: <%= nmissing(nvar) %>).
+
+<% if (is.numeric(var)) { %>
+## Base statistics
+
+<%=
+set.caption(sprintf('Descriptives: %s', label(var)))
+data.frame(
+    Mean     = mean(var),
+    SD       = sd(var),
+    Variance = rapportools::var(var),
+    row.names = name(var))
+%>
+
+The [standard deviation](http://en.wikipedia.org/wiki/Standard_deviation) equals to  <%= sd(var) %> (variance: <%= var(var) %>), which shows the unstandardized degree of [homogenity](http://en.wikipedia.org/wiki/Homogeneity_(statistics)): how much variation exists from the average. The [expected value](http://en.wikipedia.org/wiki/Mean) is around <%= mean(var) %>, somewhere between <%= mean(var)-1.96*se.mean(var) %> and <%= mean(var) + 1.96 * se.mean(var) %> with the standard error of <%= se.mean(var) %>.
+
+<% if (rp.min(var)<=0) { %>
+The highest value found in the dataset is <%= rp.max(var) %>, while the minimum is <%= rp.min(var) %>. The difference between the two is described by the [range](http://en.wikipedia.org/wiki/Range_(statistics)): <%= diff(range(var, na.rm = TRUE)) %>.
+<% } else { %>
+The highest value found in the dataset is <%= max(var) %>, which is exactly <%= max(var) / min(var) %> times higher than the minimum (<%= min(var) %>). The difference between the two is described by the [range](http://en.wikipedia.org/wiki/Range_(statistics)): <%= range(var) %>.
+<% } %>
+
+## Chart
+
+A [histogram](http://en.wikipedia.org/wiki/Histogram) visually shows the [distribution](http://en.wikipedia.org/wiki/Probability_distribution) of the dataset based on artificially allocated [frequencies](http://en.wikipedia.org/wiki/Statistical_frequency). Each bar represents a theoretical interval of the data, where the height shows the count or density.
+
+<%=
+set.caption(sprintf('Histogram: %s', label(var)))
+histogram(var, xlab = label(var))
+%>
+
+If we *suppose* that *<%= label(var) %>* is not near to the [normal distribution](http://en.wikipedia.org/wiki/Normal_distribution) (see for example [skewness](http://en.wikipedia.org/wiki/Skewness): <%= skewness(var) %>, [kurtosis](http://en.wikipedia.org/wiki/Kurtosis): <%= kurtosis(var) %>), checking the median (<%= median(var) %>) might be a better option instead of the mean. The [interquartile range](http://en.wikipedia.org/wiki/Interquartile_range) (<%= iqr(var) %>) measures the statistics dispersion of the variable (similar to standard deviation) based on median.
+
+<% } else { %>
+
+## Base statistics
+
+<%=
+set.caption(sprintf('Frequency table: %s', label(var)))
+rp.freq(name(var), rapport.data, na.rm = FALSE, include.na = TRUE)
+%>
+
+The most frequent value is *<%= t <- table(var); names(t[t == max(t)]) %>*.
+
+## Charts
+
+<%=
+set.caption(sprintf('Barplot: %s', label(var)))
+barchart(var, ylab = label(var))
+%>
+
+<% } %>

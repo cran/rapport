@@ -1,5 +1,6 @@
 require(rapport)
-demo.opt <- getOption("demo.ask"); dev.ask <- getOption("device.ask.default"); replay.opt <- getOption("graph.replay"); record.opt <- evalsOptions('graph.recordplot'); options("demo.ask" = FALSE); options("device.ask.default" = FALSE)
+require(pander)
+demo.opt <- getOption("demo.ask"); dev.ask <- getOption("device.ask.default"); replay.opt <- getOption("rapport.graph.replay"); record.opt <- evalsOptions('graph.recordplot'); options("demo.ask" = FALSE); options("device.ask.default" = FALSE)
 next.please <- function(msg = "Press ENTER to continue: ") invisible(readline(msg))
 
 
@@ -25,65 +26,65 @@ next.please <- function(msg = "Press ENTER to continue: ") invisible(readline(ms
 ## In order to render a template you should call \code{rapport} with some input specifications. ##
 ## To make this easy, check out the example commands of various templates:                      ##
 ##                                                                                              ##
-##       tpl.meta('example')$example                                                            ##
+##       rapport.meta('Example')$example                                                        ##
 ##                                                                                              ##
 ##################################################################################################
 
 
 next.please()
-tpl.meta('example')$example
+rapport.meta('Example')$example
 
 
-#####################################################
-##                                                 ##
-## Let us run the first example of 'example.tpl'.  ##
-##                                                 ##
-## Will run:                                       ##
-##                                                 ##
-##      tpl.example('example', 1)                  ##
-##                                                 ##
-## Which is equivalent to:                         ##
-##                                                 ##
-##      rapport("example", ius2008, var='leisure') ##
-##                                                 ##
-#####################################################
-
-
-next.please()
-tpl.example('example', 1)
-
-
-#######################################################################################
-##                                                                                   ##
-## In our previous example, we provided "leisure" variable to the template.          ##
-## In the same manner you can provide other inputs. See `?tpl.inputs` for details.   ##
-##                                                                                   ##
-## OK, let's see other templates. We'll list all templates bundled with the package: ##
-##                                                                                   ##
-## Will run:                                                                         ##
-##                                                                                   ##
-##      tpl.list()                                                                   ##
-##                                                                                   ##
-#######################################################################################
+#########################################################
+##                                                     ##
+## Let us run the first example of 'Example.rapport'.  ##
+##                                                     ##
+## Will run:                                           ##
+##                                                     ##
+##      rapport.example('Example', 1)                  ##
+##                                                     ##
+## Which is equivalent to:                             ##
+##                                                     ##
+##      rapport("Example", ius2008, v = 'leisure')     ##
+##                                                     ##
+#########################################################
 
 
 next.please()
-tpl.list()
+rapport.example('Example', 1)
 
 
-##############################################################################
-##                                                                          ##
-## OK, 'correlations.tpl' seems interesting, let us run a template example! ##
-##                                                                          ##
-## Will run:                                                                ##
-##                                                                          ##
-##      tpl.example('correlations')                                         ##
-##                                                                          ##
-##############################################################################
+############################################################################################
+##                                                                                        ##
+## In our previous example, we provided "leisure" variable to the template.               ##
+## In the same manner you can provide other inputs. See `?rapport.inputs` for details.    ##
+##                                                                                        ##
+## OK, let's see other templates. We'll list all templates bundled with the package:      ##
+##                                                                                        ##
+## Will run:                                                                              ##
+##                                                                                        ##
+##      rapport.ls()                                                                      ##
+##                                                                                        ##
+############################################################################################
 
 
 next.please()
-tpl.example('correlations')
+rapport.ls()
+
+
+#################################################################################
+##                                                                             ##
+## OK, 'Correlation.rapport' seems interesting, let us run a template example! ##
+##                                                                             ##
+## Will run:                                                                   ##
+##                                                                             ##
+##      rapport.example('Correlation')                                         ##
+##                                                                             ##
+#################################################################################
+
+
+next.please()
+rapport.example('Correlation')
 
 
 ################################################################
@@ -92,7 +93,7 @@ tpl.example('correlations')
 ##                                                            ##
 ## Will run:                                                  ##
 ##                                                            ##
-##    tpl.export(tpl.example('correlations', 'all'))          ##
+##    rapport.export(rapport.example('Correlation', 'all'))   ##
 ##                                                            ##
 ## NOTE: this requires Pandoc to be installed!                ##
 ##       Please check out our INSTALLATION file for details.  ##
@@ -101,7 +102,7 @@ tpl.example('correlations')
 
 
 next.please()
-tpl.export(tpl.example('correlations', 'all'))
+rapport.export(rapport.example('Correlation', 'all'))
 
 
 ##################################################################################
@@ -110,13 +111,13 @@ tpl.export(tpl.example('correlations', 'all'))
 ##                                                                              ##
 ## Will run:                                                                    ##
 ##                                                                              ##
-##      rapport('correlations', data=mtcars, vars=c('mpg', 'hp', 'wt', 'qsec')) ##
+##      rapport('Correlation', data=mtcars, vars=c('mpg', 'hp', 'wt', 'qsec'))  ##
 ##                                                                              ##
 ##################################################################################
 
 
 next.please()
-rapport('correlations', data=mtcars, vars=c('mpg', 'hp', 'wt', 'qsec'))
+rapport('Correlation', data = mtcars, vars = c('mpg', 'hp', 'wt', 'qsec'))
 
 
 ##################################################################################
@@ -128,7 +129,7 @@ rapport('correlations', data=mtcars, vars=c('mpg', 'hp', 'wt', 'qsec'))
 ## check out the generated images, please run `rapport` with custom options:    ##
 ##                                                                              ##
 ##     * evalsOptions('graph.recordplot', TRUE)                                 ##
-##     * options('graph.replay' = TRUE)                                         ##
+##     * options('rapport.graph.replay' = TRUE)                                 ##
 ##                                                                              ##
 ## This would tell `rapport` to save generated images and show them in the      ##
 ## the graphics device while printing. This would also let you resize images    ##
@@ -137,16 +138,16 @@ rapport('correlations', data=mtcars, vars=c('mpg', 'hp', 'wt', 'qsec'))
 ## Will run:                                                                    ##
 ##                                                                              ##
 ##      evalsOptions('graph.recordplot', TRUE)                                  ##
-##      options('graph.replay' = TRUE)                                          ##
-##      rapport('correlations', data=mtcars, vars=c('mpg', 'hp', 'wt', 'qsec')) ##
+##      options('rapport.graph.replay' = TRUE)                                  ##
+##      rapport('Correlation', data=mtcars, vars=c('mpg', 'hp', 'wt', 'qsec'))  ##
 ##                                                                              ##
 ##################################################################################
 
 
 next.please()
 evalsOptions('graph.recordplot', TRUE)
-options('graph.replay' = TRUE)
-report <- rapport('correlations', data=mtcars, vars=c('mpg', 'hp', 'wt', 'qsec'))
+options('rapport.graph.replay' = TRUE)
+report <- rapport('Correlation', data = mtcars, vars = c('mpg', 'hp', 'wt', 'qsec'))
 report
 
 
@@ -156,7 +157,7 @@ report
 ##                                                                                                        ##
 ## Will run:                                                                                              ##
 ##                                                                                                        ##
-##      tpl.export(report, format = 'odt')                                                                ##
+##    rapport.export(report, format = 'odt')                                                              ##
 ##                                                                                                        ##
 ## NOTE: this requires Pandoc to be installed!                                                            ##
 ##                                                                                                        ##
@@ -164,7 +165,7 @@ report
 
 
 next.please()
-tpl.export(report, format = 'odt')
+rapport.export(report, format = 'odt')
 
 
 ############################################################################################################
@@ -173,7 +174,7 @@ tpl.export(report, format = 'odt')
 ##                                                                                                        ##
 ## Will run:                                                                                              ##
 ##                                                                                                        ##
-##      rapport.html('correlations', data=mtcars, vars=c('mpg', 'hp', 'wt', 'qsec'), graph.hi.res = TRUE) ##
+##      rapport.html('Correlation', data=mtcars, vars=c('mpg', 'hp', 'wt', 'qsec'), graph.hi.res = TRUE)  ##
 ##                                                                                                        ##
 ## NOTE: this requires Pandoc to be installed!                                                            ##
 ##                                                                                                        ##
@@ -181,10 +182,10 @@ tpl.export(report, format = 'odt')
 
 
 next.please()
-rapport.html('correlations', data=mtcars, vars=c('mpg', 'hp', 'wt', 'qsec'), graph.hi.res = TRUE)
+rapport.html('Correlation', data = mtcars, vars = c('mpg', 'hp', 'wt', 'qsec'), graph.hi.res = TRUE)
 
 
-rm(next.please); rm(report); options("demo.ask" = demo.opt); options("graph.replay" = replay.opt); evalsOptions("graph.recordplot", record.opt); options("device.ask.default" = dev.ask)
+rm(next.please); rm(report); options("demo.ask" = demo.opt); options("rapport.graph.replay" = replay.opt); evalsOptions("graph.recordplot", record.opt); options("device.ask.default" = dev.ask)
 
 
 ##############################################
