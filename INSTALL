@@ -6,10 +6,10 @@ As the main purpose of `rapport` is to export the template-based reports to
 nicely formatted documents - it is highly recommended to install Pandoc as 
 backend for that:
 
-    http://johnmacfarlane.net/pandoc
+    https://johnmacfarlane.net/pandoc
 
 In order to export templates to our factory default HTML design
-(http://rapport-package.info), and use other formats (like pdf, odt, 
+(https://rapporter.github.io/rapport/), and use other formats (like pdf, odt, 
 docx etc.), install pandoc from: 
 
     http://johnmacfarlane.net/pandoc/installing.html

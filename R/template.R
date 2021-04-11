@@ -686,7 +686,7 @@ rapport <- function(fp, data = NULL, ..., env = .GlobalEnv, reproducible = FALSE
         input.names    <- names(input.required)
         ## take default inputs into account
         if (!all(input.names[input.required] %in% names(i)) && any(sapply(inputs, function(x) is.empty(x$value) & !identical(x$value, FALSE) & is.empty(i[[x$name]]) & x$required))) {
-            stopf("you haven't provided a value for %s", p(input.names[input.required], '"'))
+            stopf("missing required input for %s", p(setdiff(input.names[input.required], names(i)), '"'))
         }
 
         ## data required
@@ -733,7 +733,7 @@ rapport <- function(fp, data = NULL, ..., env = .GlobalEnv, reproducible = FALSE
                 ## standalone input can now be atomic or recursive
                 if (x$standalone) {
                     ## either a value provided in the rapport() call, or a template default, if any
-                    val <- if (is.null(user.input)) input.value else user.input
+                    val <- if (is.null(user.input)) unlist(input.value) else user.input
                     val.length <- length(val)
                 } else {
                     ## it's not standalone, so user must have provided a character string
@@ -822,7 +822,7 @@ rapport <- function(fp, data = NULL, ..., env = .GlobalEnv, reproducible = FALSE
                 assign(sprintf('%s.len', input.name), length(val), envir = e)         # variable length
             }
 
-            ## currently we support only data.frame and atomic vectos
+            ## currently we support only data.frame and atomic vectors
             if (is.data.frame(val))
                 assign(sprintf('%s.label', input.name), sapply(val, label), envir = e) # variable labels
             else if (is.atomic(val))
