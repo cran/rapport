@@ -34,3 +34,12 @@ The output of \code{rapport} command depends on various package-specific options
 \seealso{
 \code{pander} package: \url{https://rapporter.github.io/pander/}
 }
+\author{
+\strong{Maintainer}: Gergely Daróczi \email{daroczig@rapporter.net}
+
+Authors:
+\itemize{
+  \item Aleksandar Blagotić \email{alex@rapporter.net}
+}
+
+}
